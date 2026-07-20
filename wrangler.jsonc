@@ -13,7 +13,7 @@
     "nodejs_compat"
   ],
   "vars": {
-    "VITE_API_BASE_URL": "https://mygrafix-worker.your-name.workers.dev",
+    "VITE_API_BASE_URL":"https://mygrafix-dashboard-worker.mygrafix.workers.dev",
     "VITE_CLIENT_ID": "cli-sovereign"
   }
 }
