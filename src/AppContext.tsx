@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Service, Barber, Booking, Review, Product, CartItem, LoyaltyCard, GiftCardDesign } from './types';
+import { Service, Barber, Booking, Review, Product, CartItem, LoyaltyCard, GiftCardDesign, GalleryItem } from './types';
 import { api, CLIENT_ID, BusinessInfo } from './lib/api';
-import { INITIAL_SERVICES, INITIAL_BARBERS, INITIAL_PRODUCTS, INITIAL_REVIEWS } from './data';
 
 interface AppContextType {
   businessInfo: BusinessInfo | null;
@@ -9,6 +8,7 @@ interface AppContextType {
   barbers: Barber[];
   bookings: Booking[];
   reviews: Review[];
+  gallery: GalleryItem[];
   products: Product[];
   cart: CartItem[];
   wishlist: string[];
@@ -16,9 +16,7 @@ interface AppContextType {
   giftCards: GiftCardDesign[];
   isLoading: boolean;
   error: string | null;
-  isDemoMode: boolean;
   retryLoad: () => void;
-  activateDemoMode: () => void;
   
   // Services Admin Actions
   addService: (service: Service) => void;
@@ -62,9 +60,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
 
   const [bookings, setBookings] = useState<Booking[]>(() => {
     const saved = localStorage.getItem('luxury_barber_bookings');
@@ -102,58 +100,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Load application data from the Cloudflare Worker
+  // Load all public data through the Cloudflare Worker. There is intentionally
+  // no browser-side Supabase call and no demonstration-data fallback.
   const loadData = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [info, svcs, bbrs, prods, revs] = await Promise.all([
-        api.getBusinessInfo(CLIENT_ID),
-        api.getServices(CLIENT_ID),
-        api.getBarbers(CLIENT_ID),
-        api.getProducts(CLIENT_ID),
-        api.getReviews(CLIENT_ID),
-      ]);
-
-      setBusinessInfo(info);
-      setServices(svcs);
-      setBarbers(bbrs);
-      setProducts(prods);
-      setReviews(revs);
-      setIsDemoMode(false);
+      if (!CLIENT_ID) throw new Error('The website is not configured with a client ID.');
+      const site = await api.getPublicSite(CLIENT_ID);
+      setBusinessInfo(site.business);
+      setServices(site.services);
+      setBarbers(site.barbers);
+      setProducts(site.products);
+      setReviews(site.reviews);
+      setGallery(site.gallery);
     } catch (err: any) {
       console.warn('Could not load data from Cloudflare Worker:', err);
-      // We will show a friendly Error UI on the main screen, giving the user a choice to retry or run demo mode
-      setError(err?.message || 'A network connection failure occurred with the Cloudflare Worker.');
+      setError(err?.message || 'We could not load the business information. Please try again shortly.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const activateDemoMode = () => {
-    setIsDemoMode(true);
-    setError(null);
-    setBusinessInfo({
-      client_id: 'cli-sovereign',
-      business_name: 'SOVEREIGN BARBER',
-      logo_url: '',
-      primary_color: '#C89B3C',
-      secondary_color: '#0F0F0F',
-      hero_title: 'THE SOVEREIGN',
-      hero_subtitle: 'PRECISION GROOMING FOR DEBONAIR GENTLEMEN',
-      phone: '+44 (0) 20 7946 0192',
-      email: 'concierge@sovereigngrooming.co.uk',
-      owner_email: 'concierge@sovereigngrooming.co.uk',
-      address: '27 Bruton Place, Mayfair, London W1J 6NQ',
-      opening_hours: 'Monday - Friday: 09:00 - 20:00 | Saturday: 10:00 - 18:00',
-      active: true,
-    });
-    setServices(INITIAL_SERVICES);
-    setBarbers(INITIAL_BARBERS);
-    setProducts(INITIAL_PRODUCTS);
-    setReviews(INITIAL_REVIEWS);
-    setIsLoading(false);
-  };
 
   useEffect(() => {
     loadData();
@@ -224,17 +192,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // BOOKINGS ACTIONS
   const addBooking = async (bookingData: Omit<Booking, 'id' | 'createdAt' | 'status'>) => {
-    if (isDemoMode) {
-      const newBooking: Booking = {
-        ...bookingData,
-        id: `book-${Date.now()}`,
-        status: 'confirmed',
-        createdAt: new Date().toISOString()
-      };
-      setBookings(prev => [newBooking, ...prev]);
-      return newBooking;
-    }
-
     try {
       const startTimeIso = new Date(`${bookingData.date}T${bookingData.time}:00`).toISOString();
       const res = await api.createBooking({
@@ -331,17 +288,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     customer: { name: string; email: string; phone: string },
     notes?: string
   ) => {
-    if (isDemoMode) {
-      const orderNumber = `SOV-ORD-${Math.floor(Math.random() * 900000) + 100000}`;
-      const cartTotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
-      clearCart();
-      return {
-        success: true,
-        orderNumber,
-        total: cartTotal + (cartTotal * 0.08) + 150
-      };
-    }
-
     try {
       const res = await api.createOrder({
         clientId: CLIENT_ID,
@@ -373,26 +319,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setReviews(prev => [newReview, ...prev]);
 
-    if (!isDemoMode) {
-      try {
-        await api.submitContactForm({
-          clientId: CLIENT_ID,
-          formName: 'contact',
-          customer: {
-            name: reviewData.name,
-            email: 'guest@mygrafixmedia.online',
-          },
-          fields: {
-            SubmissionType: 'Review Feedback',
-            rating: reviewData.rating,
-            service: reviewData.service,
-            review_text: reviewData.text,
-          }
-        });
-      } catch (err) {
-        console.warn('Failed to submit review log to Worker:', err);
-      }
-    }
+    try {
+      await api.submitContactForm({
+        clientId: CLIENT_ID!, formName: 'contact', customer: { name: reviewData.name, email: 'guest@mygrafixmedia.online' },
+        fields: { SubmissionType: 'Review Feedback', rating: reviewData.rating, service: reviewData.service, review_text: reviewData.text }
+      });
+    } catch (err) { console.warn('Failed to submit review log to Worker:', err); }
   };
 
   // LOYALTY ACTIONS
@@ -429,6 +361,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       barbers,
       bookings,
       reviews,
+      gallery,
       products,
       cart,
       wishlist,
@@ -436,9 +369,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       giftCards,
       isLoading,
       error,
-      isDemoMode,
       retryLoad: loadData,
-      activateDemoMode,
       
       addService,
       updateServicePrice,

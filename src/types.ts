@@ -49,6 +49,14 @@ export interface Review {
   service: string;
 }
 
+export interface GalleryItem {
+  id: string;
+  before: string;
+  after: string;
+  title: string;
+  barber: string;
+}
+
 export interface Product {
   id: string;
   name: string;

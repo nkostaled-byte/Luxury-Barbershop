@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../AppContext';
+import { api, CLIENT_ID } from '../lib/api';
 import { motion, AnimatePresence } from 'motion/react';
 import { Calendar, Clock, User, CheckCircle2, AlertTriangle, ChevronRight, ArrowLeft, Scissors, Star, CalendarDays } from 'lucide-react';
 
@@ -32,6 +33,8 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [calendarSynced, setCalendarSynced] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [availabilityError, setAvailabilityError] = useState('');
 
   const selectedService = services.find(s => s.id === selectedServiceId);
   const selectedBarber = barbers.find(b => b.id === selectedBarberId);
@@ -68,8 +71,23 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
     ? dates.filter(d => selectedBarber.availableDays.includes(d.dayName))
     : dates;
 
-  // Barber slots
-  const availableSlots = selectedBarber ? selectedBarber.availableSlots : [];
+  useEffect(() => {
+    if (!CLIENT_ID || !selectedBarberId || !selectedDate) {
+      setAvailableSlots([]);
+      return;
+    }
+    let cancelled = false;
+    setAvailabilityError('');
+    api.getBookingAvailability(CLIENT_ID, selectedBarberId, selectedDate)
+      .then((slots) => { if (!cancelled) setAvailableSlots(slots); })
+      .catch((err) => {
+        if (!cancelled) {
+          setAvailableSlots([]);
+          setAvailabilityError(err?.message || 'Availability is temporarily unavailable.');
+        }
+      });
+    return () => { cancelled = true; };
+  }, [selectedBarberId, selectedDate]);
 
   const handleNextStep = async () => {
     setError('');
@@ -353,6 +371,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                 className="space-y-3"
               >
                 <label className="text-xs text-[#A7A7A7] tracking-widest uppercase mb-3 block">AVAILABLE TIME SLOTS</label>
+                {availabilityError && <p className="text-xs text-red-300">{availabilityError}</p>}
                 <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
                   {availableSlots.map((slot) => (
                     <button

@@ -1,20 +1,25 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Luxury Barbershop
 
-# Run and deploy your AI Studio app
+The public website reads its catalogue and branding from Supabase. The
+Cloudflare Worker handles all writes: contact submissions, bookings, orders,
+stock updates, and Resend customer/owner emails.
 
-This contains everything you need to run your app locally.
+## Configure
 
-View your app in AI Studio: https://ai.studio/apps/4a07a8e5-365b-4a14-a629-b2b5faec17ea
+1. Copy `.env.example` to `.env.local` and set its four values.
+2. Set `VITE_CLIENT_ID` to an active `clients.client_id` in Supabase.
+3. Enable Supabase RLS and allow the `anon` role read-only access to the
+   public rows in `clients`, `products`, `services`, `staff`, and `reviews`.
+   Never grant browser writes.
+4. Configure these Worker secrets separately: `SUPABASE_URL`,
+   `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `RESEND_API_KEY`, and
+   `R2_PUBLIC_URL`, plus the required R2 and KV bindings.
 
-## Run Locally
+## Run locally
 
-**Prerequisites:**  Node.js
+```bash
+npm install
+npm run dev
+```
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Validate with `npm run lint` and `npm run build`.

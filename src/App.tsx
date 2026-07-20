@@ -2,11 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AppProvider, useApp } from './AppContext';
 import { api, CLIENT_ID, WORKER_URL } from './lib/api';
 import { LuxuryLoader } from './components/LuxuryLoader';
-import { BeforeAfterSlider } from './components/BeforeAfterSlider';
 import { BookingFlow } from './components/BookingFlow';
 import { ShopAndCart } from './components/ShopAndCart';
 import { AdminDashboard } from './components/AdminDashboard';
-import { BEFORE_AFTER_GALLERY } from './data';
+import { BeforeAfterSlider } from './components/BeforeAfterSlider';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Scissors, Calendar, Award, Star, Phone, MapPin, Clock, MessageSquare, 
@@ -16,8 +15,8 @@ import {
 
 function AppContent() {
   const { 
-    services, barbers, reviews, addReview,
-    businessInfo, isLoading, error, isDemoMode, retryLoad, activateDemoMode 
+    services, barbers, reviews, gallery, addReview,
+    businessInfo, isLoading, error, retryLoad
   } = useApp();
   
   // Navigation & Scroll states
@@ -98,22 +97,11 @@ function AppContent() {
     setIsSubmittingContact(true);
     setContactError('');
     try {
-      if (isDemoMode) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      } else {
-        await api.submitContactForm({
-          clientId: CLIENT_ID,
-          formName: 'contact',
-          customer: {
-            name: contactName,
-            email: contactEmail,
-          },
-          fields: {
-            message: contactMessage,
-            page_url: window.location.href,
-          }
-        });
-      }
+      await api.submitContactForm({
+        clientId: CLIENT_ID!, formName: 'contact',
+        customer: { name: contactName, email: contactEmail },
+        fields: { message: contactMessage, page_url: window.location.href }
+      });
       setContactSuccess(true);
       setContactName('');
       setContactEmail('');
@@ -178,13 +166,6 @@ function AppContent() {
               className="px-6 py-3 bg-gold hover:bg-gold/90 text-black text-xs font-space font-bold tracking-widest uppercase transition-all rounded-sm flex items-center justify-center gap-2"
             >
               RETRY CONNECTION
-            </button>
-            <button
-              type="button"
-              onClick={activateDemoMode}
-              className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-space tracking-widest uppercase transition-all rounded-sm"
-            >
-              LAUNCH OFFLINE / DEMO MODE
             </button>
           </div>
           
@@ -650,15 +631,9 @@ function AppContent() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {BEFORE_AFTER_GALLERY.map((item) => (
-              <BeforeAfterSlider 
-                key={item.id}
-                before={item.before}
-                after={item.after}
-                title={item.title}
-                barber={item.barber}
-              />
-            ))}
+            {gallery.length ? gallery.map((item) => (
+              <BeforeAfterSlider key={item.id} before={item.before} after={item.after} title={item.title} barber={item.barber} />
+            )) : <p className="col-span-full text-sm text-[#A7A7A7]">No gallery images have been published yet.</p>}
           </div>
         </div>
       </section>
@@ -1092,19 +1067,12 @@ function AppContent() {
                   const emailInput = form.querySelector('input') as HTMLInputElement;
                   if (!emailInput.value) return;
                   try {
-                    if (!isDemoMode) {
-                      await api.submitContactForm({
-                        clientId: CLIENT_ID,
-                        formName: 'contact',
-                        customer: {
-                          name: 'Newsletter Subscriber',
-                          email: emailInput.value,
-                        },
-                        fields: {
-                          source: 'Footer Subscription Form',
-                        }
-                      });
-                    }
+                    await api.submitContactForm({
+                      clientId: CLIENT_ID!,
+                      formName: 'contact',
+                      customer: { name: 'Newsletter Subscriber', email: emailInput.value },
+                      fields: { source: 'Footer Subscription Form' }
+                    });
                     setNewsletterSubscribed(true);
                     form.reset();
                     setTimeout(() => setNewsletterSubscribed(false), 5000);
