@@ -59,21 +59,13 @@ class ApiError extends Error {
   }
 }
 
-/**
- * Resolves the base URL for API requests. During local development (Vite
- * dev server), VITE_API_BASE_URL is typically undefined — in that case we
- * fall back to same-origin requests so the Vite proxy can forward /api/*
- * to the Cloudflare Worker. When deployed via Cloudflare Pages, the
- * wrangler.jsonc `vars.VITE_API_BASE_URL` is injected at build time.
- */
-function resolveBaseUrl(): string {
-  if (API_BASE_URL) return API_BASE_URL.replace(/\/$/, '');
-  return ''; // same-origin — relies on Vite proxy in dev or Pages routes
+function requireApiBaseUrl() {
+  if (!API_BASE_URL) throw new ApiError('The website is not configured with a Worker URL.');
+  return API_BASE_URL.replace(/\/$/, '');
 }
 
 async function fetchJson(path: string, options: RequestInit = {}) {
-  const base = resolveBaseUrl();
-  const response = await fetch(`${base}${path}`, {
+  const response = await fetch(`${requireApiBaseUrl()}${path}`, {
     ...options,
     headers: { 'Content-Type': 'application/json', ...(options.headers ?? {}) },
   });
