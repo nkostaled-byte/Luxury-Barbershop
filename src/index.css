@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-bebas: "Bebas Neue", sans-serif;
+  --font-space: "Space Grotesk", sans-serif;
+  
+  --color-gold: #C89B3C;
+  --color-luxury-bg: #0F0F0F;
+  --color-luxury-sec: #171717;
+  --color-luxury-text: #F8F8F8;
+  --color-luxury-muted: #A7A7A7;
+  --color-luxury-border: rgba(255, 255, 255, 0.08);
+  --color-luxury-card: rgba(255, 255, 255, 0.03);
+}
+
+@layer base {
+  body {
+    background-color: #0F0F0F;
+    color: #F8F8F8;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
+}
+
+/* Custom premium scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #C89B3C;
+  border-radius: 99px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a97e2c;
+}
+
