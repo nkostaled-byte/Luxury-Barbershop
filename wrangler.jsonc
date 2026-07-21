@@ -14,6 +14,6 @@
   ],
   "vars": {
     "VITE_API_BASE_URL":"https://mygrafix-dashboard-worker.mygrafix.workers.dev",
-    "VITE_CLIENT_ID": "cli-sovereign"
+    "VITE_CLIENT_ID": "client-barbershop-1"
   }
 }
