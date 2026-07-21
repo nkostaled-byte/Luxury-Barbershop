@@ -112,7 +112,7 @@ export const api = {
     return result.slots ?? [];
   },
 
-  submitContactForm: (payload: SubmissionPayload) => fetchJson('/api/contact', { method: 'POST', body: JSON.stringify(payload) }),
+  submitContactForm: (payload: SubmissionPayload) => fetchJson('/', { method: 'POST', body: JSON.stringify(payload) }),
   createBooking: (payload: BookingPayload) => fetchJson('/api/bookings', { method: 'POST', body: JSON.stringify(payload) }),
   createOrder: (payload: OrderPayload) => fetchJson('/api/orders', { method: 'POST', body: JSON.stringify(payload) }),
   claimAccount: (token: string, businessName?: string) => fetchJson('/api/claim-account', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify({ businessName }) }),
