@@ -65,11 +65,21 @@ function requireApiBaseUrl() {
 }
 
 async function fetchJson(path: string, options: RequestInit = {}) {
-  const response = await fetch(`${requireApiBaseUrl()}${path}`, {
+  const url = `${requireApiBaseUrl()}${path}`;
+  console.log('=== fetchJson REQUEST ===');
+  console.log('URL:', url);
+  console.log('OPTIONS:', options);
+  const response = await fetch(url, {
     ...options,
     headers: { 'Content-Type': 'application/json', ...(options.headers ?? {}) },
   });
-  const body = await response.json().catch(() => null);
+  console.log('=== fetchJson RESPONSE ===');
+  console.log('STATUS:', response.status);
+  console.log('OK:', response.ok);
+  const text = await response.text();
+  console.log('RAW TEXT:', text);
+  const body = text ? JSON.parse(text) : null;
+  console.log('PARSED BODY:', body);
   if (!response.ok) throw new ApiError(body?.error || 'The service could not complete your request.', response.status);
   return body;
 }
@@ -96,7 +106,15 @@ function mapGalleryItem(row: any): GalleryItem {
 
 export const api = {
   getPublicSite: async (clientId: string): Promise<PublicSiteData> => {
-    const result = await fetchJson(`/api/public/site?clientId=${encodeURIComponent(clientId)}`);
+    console.log('=== getPublicSite START ===');
+    console.log('CLIENT_ID:', clientId);
+    const fullPath = `/api/public/site?clientId=${encodeURIComponent(clientId)}`;
+    console.log('FULL PATH:', fullPath);
+    const result = await fetchJson(fullPath);
+    console.log('=== getPublicSite RESULT ===');
+    console.log('RESULT:', result);
+    console.log('RESULT BUSINESS:', result?.business);
+    console.log('RESULT BUSINESS TYPE:', typeof result?.business);
     return {
       business: result.business,
       products: (result.products ?? []).map(mapProduct),

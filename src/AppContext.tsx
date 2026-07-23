@@ -107,8 +107,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setError(null);
     try {
       if (!CLIENT_ID) throw new Error('The website is not configured with a client ID.');
+      console.log('=== AppContext loadData START ===');
+      console.log('CLIENT_ID:', CLIENT_ID);
       const site = await api.getPublicSite(CLIENT_ID);
+      console.log('=== AppContext site object ===');
+      console.log('SITE OBJECT:', site);
+      console.log('SITE BUSINESS:', site.business);
+      console.log('SITE BUSINESS TYPE:', typeof site.business);
+      console.log('=== AppContext about to setBusinessInfo ===');
       setBusinessInfo(site.business);
+      console.log('=== AppContext SET business ===');
+      console.log('BUSINESS:', site.business);
       setServices(site.services);
       setBarbers(site.barbers);
       setProducts(site.products);
